@@ -5,7 +5,10 @@ import functools
 import json
 import os
 import pickle
+import qrcode
+import pyzbar.pyzbar as pyzbar
 
+from PIL import Image
 from lxml import etree
 from jd_logger import logger
 from timer import Timer
@@ -121,6 +124,11 @@ class QrLogin:
         self.is_login = False
         self.refresh_login_status()
 
+        self.qr = qrcode.QRCode(version=None,
+                                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                                box_size=1,
+                                border=2,)
+
     def refresh_login_status(self):
         """
         刷新是否登录状态
@@ -177,6 +185,11 @@ class QrLogin:
             return False
 
         save_image(resp, self.qrcode_img_file)
+        barcodes = pyzbar.decode(Image.open(self.qrcode_img_file))
+        data = barcodes[0].data.decode('utf-8')
+        self.qr.add_data(data)
+        self.qr.print_ascii()
+        self.qr.clear()
         logger.info('二维码获取成功，请打开京东APP扫描')
 
         open_image(add_bg_for_qr(self.qrcode_img_file))
